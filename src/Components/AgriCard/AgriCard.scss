@@ -1,0 +1,93 @@
+@import "../../App.scss";
+
+.card.agricard {
+  border-radius: 2rem;
+  padding-right: 1rem !important;
+  padding-left: 1rem !important;
+  z-index: 2;
+  border-color: transparent;
+  @media (max-width: 767px) {
+    padding-right: 1rem !important;
+    padding-left: 1rem !important;
+  }
+}
+
+.card-body {
+  color: grey;
+}
+
+.card-body-right {
+  text-align: right !important;
+  @media (max-width: 767px) {
+    text-align: left !important;
+  }
+}
+
+.card-body-top-row {
+  height: 3rem;
+}
+
+.card-title.h5 {
+  color: black;
+  margin-bottom: 0;
+}
+
+.card-buttons-col {
+  @media (max-width: 767px) {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+  }
+}
+
+h6 {
+  color: black;
+}
+
+label {
+  color: black;
+  font-weight: bold;
+  font-size: small;
+}
+
+.job-card-top-row {
+  height: 56px;
+}
+
+.card-buttons-col > .btn {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.btn.fav-button {
+  width: 2rem !important;
+  height: 2rem !important;
+  position: absolute;
+  top: -0.2rem;
+  right: -1rem;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  @media (max-width: 767px) {
+    position: static;
+    top: initial;
+    right: initial;
+    margin-left: 0.6rem;
+  }
+}
+
+.btn.fav-button:hover {
+  border-color: $yellow !important;
+}
+
+label.job-hours {
+  font-weight: normal;
+  margin-top: 0;
+}
+
+span.job-dates {
+  margin-right: 0 !important;
+  @media (max-width: 767px) {
+    font-size: 0.9rem;
+  }
+}
