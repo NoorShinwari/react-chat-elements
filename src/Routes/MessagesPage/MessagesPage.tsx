@@ -23,14 +23,27 @@ import {
   MessageBox,
 } from "react-chat-elements";
 import axios from "../../axios";
+import AuthContext, {
+  AuthContextData,
+} from "../../context/AuthContext/AuthContext";
+import { auth } from "firebase";
+import { db } from "../../services/firebase";
+import { userInfo } from "os";
 
 export interface MessagesPageProps {}
 
 export interface MessagesPageState {
+  user: firebase.User;
   isLoading: boolean;
+  to: string;
   text: string;
-  message: Message[];
+  chats: any[];
+  content: string;
+  readError: string | null;
+  writeError: string | null;
+  message: Message;
   filterMessage: Message[] | null;
+  users: any[];
 }
 type Message =
   | {
@@ -56,56 +69,53 @@ class MessagesPage extends React.Component<
   MessagesPageProps,
   MessagesPageState
 > {
+  static contextType: React.Context<AuthContextData> = AuthContext;
+
   state: any = {
+    user: auth().currentUser,
     isLoading: false,
     text: "",
+    chats: [],
+    content: "",
+    to: "",
+    readError: null,
+    writeError: null,
+    users: [],
     message: [
-      <MessageBox
-        id="first"
-        position={"left"}
-        type={"text"}
-        text={"HELLO THIS IS FIRST"}
-        data={{
-          uri:
-            "https://koolinus.files.wordpress.com/2019/03/avataaars-e28093-koolinus-1-12mar2019.png",
-          status: {
-            click: false,
-            loading: 0,
-          },
-        }}
-      />,
-      <MessageBox
-        id="second"
-        position={"left"}
-        type={"text"}
-        text={"HELLO THIS IS SECOND"}
-        data={{
-          uri:
-            "https://koolinus.files.wordpress.com/2019/03/avataaars-e28093-koolinus-1-12mar2019.png",
-          status: {
-            click: false,
-            loading: 0,
-          },
-        }}
-      />,
-      <MessageBox
-        id="third"
-        position={"right"}
-        type={"text"}
-        text={"HELLO THIS IS THIRD"}
-        data={{
-          uri:
-            "https://koolinus.files.wordpress.com/2019/03/avataaars-e28093-koolinus-1-12mar2019.png",
-          status: {
-            click: true,
-            loading: 0,
-          },
-        }}
-      />,
+      {
+        position: "left",
+        type: "text",
+        text: "Lorem ipsum dolor sit amet, consectetur adipisicing elit",
+        avatar: "",
+        title: "",
+        unread: 0,
+        date: new Date(),
+      },
     ],
     filterMessage: null,
   };
-  myRef = React.createRef<HTMLInputElement>();
+  componentDidMount = async () => {
+    this.setState({ readError: null });
+    try {
+      db.ref("chats").on("value", (snapshot) => {
+        let chats: any = [];
+        snapshot.forEach((snap) => {
+          chats.push(snap.val());
+        });
+
+        this.setState({ chats: chats });
+      });
+      db.ref("users").once("value", (snapshot) => {
+        let users: any = [];
+        snapshot.forEach((snap) => {
+          users.push(snap.val());
+        });
+        this.setState({ users: users });
+      });
+    } catch (error) {
+      this.setState({ readError: error.message });
+    }
+  };
 
   //   reply={{
   //     photoURL: 'https://facebook.github.io/react/img/logo.svg',
@@ -118,75 +128,52 @@ class MessagesPage extends React.Component<
   // type={'text'}
   // text={'Tempor duis do voluptate enim duis velit veniam aute ullamco dolore duis irure.'}
 
-  scrollUp = () => window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   inputHandler = (e: any) => {
     e.preventDefault();
-    const text: string = e.target.value;
-    this.setState({ text: text });
+    const content: string = e.target.value;
+    this.setState({ content: content });
   };
-  onChangeHandler = (event: any) => {
+  onChangeHandler = async (event: any) => {
     event.preventDefault();
-    event.persist();
-    console.log(event, "ButtonEvent");
-    const text = this.state.text;
-    console.log(this.state.filterMessage, "filterMessage");
-    const message = [...this.state.filterMessage];
-    const newMessage = message.map((f: any, i: number) => {
-      if (i === 0) {
-        return { ...f, props: { ...f.props, text: text } };
-      }
-    });
-    const updatedMessageArray = [...message, ...newMessage];
-    console.log(updatedMessageArray, "updatedMessageArray");
-    this.setState({ filterMessage: updatedMessageArray, text: "" });
+    const message = [...this.state.message];
 
-    // const inputRef = this.myRef.current;
+    const newMessage = message.map((f: any, i: number) => {});
+    //   return { ...f, props: { ...f.props, text: this.state.content } };
+    // });
+    // this.setState({ message: newMessage });
+    // console.log(newMessage, "newMessage");
+    // const text = newMessage.map((e: any) => e.props);
+    // console.log(text, "text");
+
+    try {
+      const { user, content, to } = this.state;
+
+      await db.ref("chats").push({
+        position: "left",
+        date: Date.now(),
+        text: content,
+        uid: user.uid,
+        avatar: user.photoURL,
+        title: user.displayName,
+        to: to,
+      });
+      this.setState({ content: "" });
+    } catch (error) {
+      this.setState({ writeError: error.message });
+    }
   };
 
-  // handleKeyUp = (event: any) => {
-  //   event.persist();
-  //   console.log(event, "CharCode");
-  //   if (event.key === "Enter") {
-  //     this.onChangeHandler(event);
-  //     event.target.value = "";
-  //   }
-
-  //   // it make the console very slow
-  // };
   render() {
-    const array = [
-      {
-        key: "first",
-        avatar:
-          "https://koolinus.files.wordpress.com/2019/03/avataaars-e28093-koolinus-1-12mar2019.png",
-        title: "Facebook",
-        subtitle: "What are you doing?",
-        date: new Date(),
-        unread: 2,
-        id: "first",
-      },
-      {
-        key: "second",
-        avatar:
-          "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTOYmsHq0Z8nR8e7_LDXbr1hwN3yJrQrtgd3Q&usqp=CAU",
-        title: "Gmail",
-        subtitle: "I am Noor lets see if it works?",
-        date: new Date(),
-        unread: 1,
-        id: "second",
-      },
-      {
-        key: "third",
-        avatar:
-          "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTOYmsHq0Z8nR8e7_LDXbr1hwN3yJrQrtgd3Q&usqp=CAU",
-        title: "Gmail",
-        subtitle: "I am Noor lets see if it works?",
-        date: new Date(),
-        unread: 1,
-        id: "third",
-      },
-    ];
-    const { message } = this.state;
+    const { user, chats, users, to } = this.state;
+    const filter = chats.filter((a: any) => a.uid !== user.uid);
+    // const filterInFilter = filter
+    //   .filter((j: any, k: number) => j.uid === chat.uid)
+    //   .map((text: any, l: any, arr: any) => {
+    //     if (arr.length === l + 1) {
+    //       return text.text;
+    //     }
+    //   });
+    console.log(user, "user");
 
     return (
       <>
@@ -197,22 +184,30 @@ class MessagesPage extends React.Component<
                 <AgriCard className="bg-">
                   <ChatList
                     className="chat-list "
-                    onClick={(j: any, k: any) => {
-                      console.log(j.id, "j.id");
-                      console.log(
-                        message.filter((e: any) => e.props.id === j.id),
-                        "e.props.id"
-                      );
-                      const filterMessage = message.filter(
-                        (e: any) => e.props.id === j.id
-                      );
-                      this.setState({ filterMessage: filterMessage });
+                    dataSource={users
+                      .filter((j: any, i: any) => {
+                        return j.uid !== user.uid ? j : null;
+                      })
+
+                      .map((chat: any, i: any) => {
+                        console.log(chat, "chat");
+                        return {
+                          avatar: chat.avatar,
+                          title: chat.title,
+                          subtitle: "",
+                          unread: chat.text ? 1 : 0,
+                          date: null,
+                          uid: chat.uid,
+                        };
+                      })}
+                    onClick={(data: any) => {
+                      const to = data.uid;
+                      this.setState({ to: to });
                     }}
-                    dataSource={array.map((e: any) => e)}
                   ></ChatList>
                 </AgriCard>
               </Col>
-              {this.state.filterMessage ? (
+              {to && (
                 <Col sm={8}>
                   <AgriCard>
                     <Card.Body
@@ -222,38 +217,49 @@ class MessagesPage extends React.Component<
                         overflow: "auto",
                       }}
                     >
-                      {this.state.filterMessage}
+                      {/* {this.state.filterMessage} */}
+                      {chats
+                        .filter(
+                          (a: any) =>
+                            (a.uid === user.uid && a.to === to) ||
+                            (a.uid === to && a.to === user.uid)
+                        )
+                        .map((chat: any) => {
+                          console.log(chat, "chatmessaglist");
+                          const uid = user.uid;
+                          return (
+                            <MessageList
+                              key={chat.date}
+                              dataSource={[
+                                {
+                                  key: chat.date,
+                                  avatar: uid !== chat.uid && chat.avatar,
+                                  date: chat.date,
+                                  title: uid !== chat.uid && chat.title,
+                                  titleColor: "var(--primary)",
+                                  position: uid === chat.uid ? "right" : "left",
+                                  text: chat.text,
+                                  uid: chat.uid,
+                                  forwarded: true,
+                                  replyButton: true,
+                                  status: uid === chat.uid ? "sent" : "read",
+                                },
+                              ]}
+                              onOpen={(o: any) => console.log(o, "open")}
+                            />
+                          );
+                        })}
                     </Card.Body>
                     <Card.Footer className="bg-transparent ">
                       <Form onSubmit={this.onChangeHandler}>
                         <InputGroup>
-                          {/* <Input
-                      id="inputValue"
-                      value={this.state.text}
-                      ref={this.myRef}
-                      placeholder="Type message Here"
-                      onChange={this.inputHandler}
-                      defaultValue={this.state.text}
-                      // rightButtons={}
-                    />{" "} */}
                           <FormControl
                             style={{ borderRadius: "2rem 0 0 2rem " }}
-                            id="inputValue"
-                            value={this.state.text}
-                            ref={this.myRef}
+                            value={this.state.content}
                             placeholder="Type message Here"
                             onChange={this.inputHandler}
-                            defaultValue={this.state.text}
                           />
                           <InputGroup.Append>
-                            {/* <Button
-                      type="submit"
-                      id="myBtn"
-                      color="white"
-                      backgroundColor="black"
-                      text="Send"
-                      onClick={this.onChangeHandler}
-                    /> */}
                             <Button
                               type="submit"
                               style={{ borderRadius: "0 2rem 2rem 0" }}
@@ -266,7 +272,7 @@ class MessagesPage extends React.Component<
                     </Card.Footer>
                   </AgriCard>
                 </Col>
-              ) : null}
+              )}
             </Row>
           </Container>
         </main>

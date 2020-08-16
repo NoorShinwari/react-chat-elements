@@ -15,14 +15,12 @@ import AuthContext, {
 } from "../../context/AuthContext/AuthContext";
 import { withRouter } from "react-router-dom";
 import { RouteComponentProps } from "react-router";
-import { signUp, signIn } from "../../helpers/auth";
 
 export interface SignInProps {}
 
 export interface SignInState {
   user: User;
   registered: boolean;
-  error: string;
 }
 type User = {
   email: string;
@@ -46,7 +44,6 @@ class SignIn extends React.Component<
       expiresIn: null,
     },
     registered: false,
-    error: "",
   };
   onChangeHandler = (input: any) => (event: any) => {
     const user: any = { ...this.state.user };
@@ -56,49 +53,41 @@ class SignIn extends React.Component<
   toggleButton = () => {
     this.setState((prevState) => ({ registered: !prevState.registered }));
   };
-  formSubmit = async (event: any) => {
+  formSubmit = (event: any) => {
     event.preventDefault();
-    this.setState({ error: "" });
     const { email, password } = this.state.user;
     const { registered } = this.state;
+    const user = { email: email, password: password, returnSecureToken: true };
+    console.log(event, "formSubmit");
+    console.log(user, "user");
+
+    const apiKey = "AIzaSyA6SfcDih--QL78CJOF31WJtbMQv0k3l-g";
+    let url = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=";
+
     if (registered) {
-      try {
-        await signIn(email, password).then((respone) =>
-          console.log(respone.user, "trySignIN")
-        );
-      } catch (error) {
-        this.setState({ error: error.message });
-      }
-    } else {
-      try {
-        await signUp(email, password).then((respone) =>
-          console.log(respone.user, "trySignUp")
-        );
-      } catch (error) {
-        this.setState({ error: error.message });
-      }
+      url =
+        "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=";
     }
+    axios
+      .post(url + apiKey, user)
+      .then((response) => {
+        const { idToken, localId, expiresIn } = response.data;
+        const { user } = this.state;
+        user.idToken = idToken;
+        user.expiresIn = expiresIn;
+        user.userId = localId;
+        this.context.userId = localId;
+        this.context.idToken = idToken;
+        this.context.expiresIn = expiresIn;
+        this.context.logIn(idToken, localId, expiresIn);
 
-    // axios
-    //   .post(url + apiKey, user)
-    //   .then((response) => {
-    //     const { idToken, localId, expiresIn } = response.data;
-    //     const { user } = this.state;
-    //     user.idToken = idToken;
-    //     user.expiresIn = expiresIn;
-    //     user.userId = localId;
-    //     this.context.userId = localId;
-    //     this.context.idToken = idToken;
-    //     this.context.expiresIn = expiresIn;
-    //     this.context.logIn(idToken, localId, expiresIn);
+        this.setState({ user: user });
+        console.log(this.context, "this.context");
 
-    //     this.setState({ user: user });
-    //     console.log(this.context, "this.context");
-
-    //     console.log(this.state.user, "userState");
-    //     this.props.history.push("/messagespage");
-    //   })
-    //   .catch((e) => console.log(e.message, "error"));
+        console.log(this.state.user, "userState");
+        this.props.history.push("/messagespage");
+      })
+      .catch((e) => console.log(e.message, "error"));
   };
   render() {
     const { registered } = this.state;
