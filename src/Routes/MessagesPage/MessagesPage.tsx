@@ -164,7 +164,7 @@ class MessagesPage extends React.Component<
   };
 
   render() {
-    const { user, chats, users, to } = this.state;
+    const { user, chats, users, to, filterMessage } = this.state;
     const filter = chats.filter((a: any) => a.uid !== user.uid);
     // const filterInFilter = filter
     //   .filter((j: any, k: number) => j.uid === chat.uid)
@@ -173,7 +173,7 @@ class MessagesPage extends React.Component<
     //       return text.text;
     //     }
     //   });
-    console.log(user, "user");
+    // console.log(user, "user");
 
     return (
       <>
@@ -182,29 +182,54 @@ class MessagesPage extends React.Component<
             <Row>
               <Col sm="4" className="flex-fill">
                 <AgriCard className="bg-">
-                  <ChatList
+                  {/* <ChatList
                     className="chat-list "
+                    onClick={(data: any, i: any) => {
+                      console.log(data, i, "herer");
+                      const to = data.uid;
+                      this.setState({ to: to });
+                    }}
                     dataSource={users
                       .filter((j: any, i: any) => {
                         return j.uid !== user.uid ? j : null;
                       })
 
                       .map((chat: any, i: any) => {
-                        console.log(chat, "chat");
+                        // console.log(chat, "chat");
                         return {
                           avatar: chat.avatar,
                           title: chat.title,
                           subtitle: "",
-                          unread: chat.text ? 1 : 0,
+                          unread: console.log(filterMessage, "filrermessage"),
                           date: null,
                           uid: chat.uid,
                         };
                       })}
-                    onClick={(data: any) => {
-                      const to = data.uid;
-                      this.setState({ to: to });
-                    }}
-                  ></ChatList>
+                  ></ChatList> */}
+                  {users
+                    .filter((j: any, i: any) => {
+                      return j.uid !== user.uid ? j : null;
+                    })
+
+                    .map((chat: any, i: any, arr: any) => {
+                      return (
+                        <ChatItem
+                          avatarFlexible={true}
+                          avatar={chat.avatar}
+                          title={chat.title}
+                          subtitle={"CultumChange "}
+                          date={null}
+                          unread={arr.length}
+                          onClick={(data: any, i: any) => {
+                            data.preventDefault();
+                            data.persist();
+                            console.log(data, chat.uid, "herer");
+                            const to = chat.uid;
+                            this.setState({ to: to });
+                          }}
+                        />
+                      );
+                    })}
                 </AgriCard>
               </Col>
               {to && (
@@ -224,11 +249,18 @@ class MessagesPage extends React.Component<
                             (a.uid === user.uid && a.to === to) ||
                             (a.uid === to && a.to === user.uid)
                         )
-                        .map((chat: any) => {
-                          console.log(chat, "chatmessaglist");
+                        .map((chat: any, i: number, arr: any) => {
+                          if (arr.length - 1 === i) {
+                            console.log(chat, "arry");
+                            const filterMessage = chat;
+                            console.log(filterMessage, "filtermessage");
+                            // this.setState({ filterMessage: chat });
+                          }
+                          // console.log(chat, "chatmessaglist");
                           const uid = user.uid;
                           return (
-                            <MessageList
+                            <>
+                              {/* <MessageList
                               key={chat.date}
                               dataSource={[
                                 {
@@ -242,11 +274,48 @@ class MessagesPage extends React.Component<
                                   uid: chat.uid,
                                   forwarded: true,
                                   replyButton: true,
+                                  // onClick: () => console.log("i am clicked"),
                                   status: uid === chat.uid ? "sent" : "read",
                                 },
                               ]}
-                              onOpen={(o: any) => console.log(o, "open")}
-                            />
+                            /> */}
+                              <MessageBox
+                                type={"text"}
+                                text={chat.text}
+                                key={chat.date}
+                                avatar={uid !== chat.uid && chat.avatar}
+                                date={chat.date}
+                                title={uid !== chat.uid && chat.title}
+                                titleColor={"var(--primary)"}
+                                position={uid === chat.uid ? "right" : "left"}
+                                status={uid === chat.uid ? "sent" : "read"}
+                                uid={chat.uid}
+                                forwarded={true}
+                                replyButton={true}
+                                focus={true}
+                                onMessageFocused={(f: any, g: any) => {
+                                  f.persist();
+                                  console.log(f, g, "messagefocused");
+                                }}
+                                onReplyClick={(h: any, i: any) =>
+                                  console.log(h, i, "onReplyClicked")
+                                }
+                                onForwardClick={(j: any, k: any) =>
+                                  console.log(j, k, "onForwarClick")
+                                }
+                                onReplyMessageClick={(l: any, m: any) => {
+                                  console.log(l, m, "onReplyclicked");
+                                }}
+                                data={{
+                                  uri:
+                                    "https://facebook.github.io/react/img/logo.svg",
+                                  status: {
+                                    click: false,
+                                    loading: 1,
+                                  },
+                                }}
+                              />
+                            </>
                           );
                         })}
                     </Card.Body>

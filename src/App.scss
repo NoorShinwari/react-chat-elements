@@ -166,3 +166,7 @@ select {
     background: var(--light);
   }
 }
+
+.toastCard .dropdown-menu.show {
+  min-width: 20rem;
+}
